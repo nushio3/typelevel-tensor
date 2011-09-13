@@ -1,16 +1,15 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS -Wall #-}
 -- | Axis utility functions.
 -- use this like 
 -- > import qualified Language.Paraiso.Axis as Axis
 
-module Language.Paraiso.Axis
+module Data.Tensor.TypeLevel.Axis
        (dimension, next, prev, all, allFrom, others)
     where
 
-import           Language.Paraiso.Prelude hiding (all)
-import           Language.Paraiso.Tensor hiding (dimension)
-import qualified Language.Paraiso.Tensor as T (dimension)
+import           Data.Tensor.TypeLevel hiding (dimension)
+import qualified Data.Tensor.TypeLevel as T (dimension)
+import           Prelude hiding (all)
 
 
 -- | The dimension of the vector space the axis belongs to.
@@ -40,4 +39,3 @@ allFrom axis = let dim = dimension axis in
 others :: (Vector v) => Axis v -> [Axis v]
 others axis = let dim = dimension axis in
               map head [[Axis $ (axisIndex axis+i) `mod` dim, axis] | i<-[1..dim-1]]
-              

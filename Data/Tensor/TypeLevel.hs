@@ -12,7 +12,7 @@
 --
 -- 'Axis' is an object for accessing the tensor components.
 
-module Language.Paraiso.Tensor
+module Data.Tensor.TypeLevel
     (
      (:~)(..), Vec(..), Axis(..), (!),
      Vector(..), VectorRing(..),
@@ -22,8 +22,23 @@ module Language.Paraiso.Tensor
 
 import qualified Algebra.Additive as Additive
 import qualified Algebra.Ring as Ring
-import           Language.Paraiso.Failure
-import           Language.Paraiso.Prelude
+import           Control.Monad.Failure
+import           System.IO.Unsafe
+
+
+import           Control.Applicative (Applicative(..), (<$>))
+import           Control.Monad hiding 
+    (mapM_, sequence_, forM_, msum, mapM, sequence, forM)
+import           Data.Foldable
+import           Data.Traversable
+import           NumericPrelude hiding 
+    (Monad, Functor, (*>),
+     (>>=), (>>), return, fail, fmap, mapM, mapM_, sequence, sequence_, 
+     (=<<), foldl, foldl1, foldr, foldr1, and, or, any, all, sum, product, 
+     concat, concatMap, maximum, minimum, elem, notElem)
+import qualified NumericPrelude as Prelude
+        
+
 
 infixl 9 !
 -- | a component operator.
@@ -159,3 +174,8 @@ type Vec1 = (:~) Vec0
 type Vec2 = (:~) Vec1
 type Vec3 = (:~) Vec2
 type Vec4 = (:~) Vec3
+
+-- | convert Failure to runtime error
+unsafePerformFailure :: IO a -> a
+unsafePerformFailure = unsafePerformIO
+
