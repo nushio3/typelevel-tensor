@@ -16,13 +16,15 @@ Name:                typelevel-tensor
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.1
+Version:             0.1.0.4
 
 -- A short (one-line) description of the package.
 Synopsis:            Tensors whose ranks and dimensions type-inferred and type-checked.
 
 -- A longer description of the package.
 Description:           A tensor class for Haskell that can type-infer and type-check over tensor ranks and dimensions.         
+
+                       See https://github.com/nushio3/typelevel-tensor/tree/master/example for examples.
 
 -- URL for the project homepage or repository.
 Homepage:            https://github.com/nushio3/typelevel-tensor
@@ -44,7 +46,7 @@ Maintainer:          muranushi@gmail.com
 -- Copyright:           
 
 Category:            Data
-
+Tested-With:         GHC==7.0.3, GHC==7.4.1
 Build-type:          Simple
 
 -- Extra files to be distributed with the package, such as examples or
@@ -67,7 +69,7 @@ Library
   -- Packages needed in order to build this package.
   Build-depends: base            == 4.*,
                  control-monad-failure >= 0.7.0  && < 0.8,
-                 numeric-prelude >= 0.2.1  && < 0.3
+                 numeric-prelude >= 0.3
 
   -- Modules not exported by this package.
   -- Other-modules:       
@@ -87,10 +89,10 @@ source-repository head
 
 test-suite runtests
     type: exitcode-stdio-1.0
-    Build-depends: base            == 4.*                   ,
+    Build-depends: array >= 0.4,
+                   base            == 4.*                   ,
                    control-monad-failure >= 0.7.0  && < 0.8 ,
-                   numeric-prelude >= 0.2.1  && < 0.3       ,
-
+                   numeric-prelude >= 0.3       ,
                    test-framework                           ,
                    test-framework-quickcheck2               ,
                    test-framework-hunit                     ,
