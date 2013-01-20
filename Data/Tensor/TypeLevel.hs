@@ -25,12 +25,11 @@ module Data.Tensor.TypeLevel
 
 import qualified Algebra.Additive as Additive
 import qualified Algebra.Ring as Ring
-import           Control.Monad.Failure
 import           System.IO.Unsafe
 import           Text.Read
 import qualified Text.ParserCombinators.ReadP as P
 
-import           Control.Applicative (Applicative(..), (<$>))
+import           Control.Applicative
 import           Control.Monad hiding
     (mapM_, sequence_, forM_, msum, mapM, sequence, forM)
 import           Data.Foldable
@@ -41,9 +40,8 @@ import           NumericPrelude hiding
      (>>=), (>>), return, fail, fmap, mapM, mapM_, sequence, sequence_,
      (=<<), foldl, foldl1, foldr, foldr1, and, or, any, all, sum, product,
      concat, concatMap, maximum, minimum, elem, notElem)
-import qualified NumericPrelude as Prelude
-
-
+import qualified Prelude as P98
+import qualified Test.QuickCheck.Arbitrary as QC
 
 infixl 9 !
 -- | a component operator.
@@ -118,17 +116,19 @@ newtype Axis (v :: * -> *) = Axis {axisIndex::Int} deriving (Eq,Ord,Show,Read)
 
 -- | An object that allows component-wise access.
 class (Traversable v) => Vector v where
-  -- | Get a component within f, a context which allows 'Failure'.
-  componentF :: (Failure StringException f) =>
+  -- | Get a component within f, a context which allows failure.
+  componentF :: (Alternative f) =>
                 Axis v -- ^the axis of the component you want
                 -> v a -- ^the target vector
-                -> f a -- ^the component, obtained within a 'Failure' monad
+                -> f a -- ^the component, obtained within a failure
 
   -- | Get a component. This computation may result in a runtime error,
   -- though, as long as the 'Axis' is generated from library functions
   -- such as 'compose', there will be no error.
   component :: Axis v -> v a -> a
-  component axis vec = unsafePerformFailure $ componentF axis vec
+  component axis vec = case componentF axis vec of
+    Just x  -> x
+    Nothing -> error $ "axis out of bound: " ++ show axis
   -- | The dimension of the vector.
   dimension :: v a -> Int
   -- | Create a 'Vector' from a function that maps
@@ -137,13 +137,13 @@ class (Traversable v) => Vector v where
 
 instance Vector Vec where
   componentF axis Vec
-    = failureString $ "axis out of bound: " ++ show axis
+    = empty
   dimension _ = 0
   compose _ = Vec
 
 instance (Vector v) => Vector ((:~) v) where
   componentF (Axis i) vx@(v :~ x)
-    | i==dimension vx - 1 = return x
+    | i==dimension vx - 1 = pure x
     | True                = componentF (Axis i) v
   dimension (v :~ _) = 1 + dimension v
   compose f = let
@@ -173,14 +173,15 @@ contract f = foldl (+) Additive.zero (compose f)
 -- thus providing unit vectors.
 class  (Vector v, Ring.C a) => VectorRing v a where
   -- | A vector where 'Axis'th component is unity but others are zero.
-  unitVectorF :: (Failure StringException f) => Axis v -> f (v a)
+  unitVectorF :: (Alternative f) => Axis v -> f (v a)
   -- | pure but unsafe version means of obtaining a 'unitVector'
   unitVector :: Axis v -> v a
-  unitVector = unsafePerformFailure . unitVectorF
+  unitVector axis = case unitVectorF axis of
+    Just x  -> x
+    Nothing -> error $ "axis out of bound: " ++ show axis
 
 instance (Ring.C a) => VectorRing Vec a where
-  unitVectorF axis
-      = failureString $ "axis out of bound: " ++ show axis
+  unitVectorF axis = empty
 
 instance (Ring.C a, VectorRing v a, Additive.C (v a))
     => VectorRing ((:~) v) a where
@@ -189,11 +190,20 @@ instance (Ring.C a, VectorRing v a, Additive.C (v a))
       z = Additive.zero
       d = dimension z
       ret
-        | i < 0 || i >= d   = failureString $ "axis out of bound: " ++ show axis
-        | i == d-1          = return $ Additive.zero :~ Ring.one
-        | 0 <= i && i < d-1 = liftM (:~ Additive.zero) $ unitVectorF (Axis i)
-        | True              = return z
+        | i < 0 || i >= d   = empty
+        | i == d-1          = pure $ Additive.zero :~ Ring.one
+        | 0 <= i && i < d-1 = fmap (:~ Additive.zero) $ unitVectorF (Axis i)
+        | True              = pure z
         -- this last guard never matches, but needed to infer the type of z.
+
+instance (Vector v, P98.Num a) => P98.Num ((:~) v a) where
+  x+y  = compose (\i -> x!i P98.+ y!i)
+  x-y  = compose (\i -> x!i P98.- y!i)
+  negate x = compose (\i -> P98.negate $ x!i)
+  (*) = error "P98 legacy instance"
+  fromInteger x = compose $ const (P98.fromInteger x)
+  abs = error "P98 legacy instance"
+  signum = error "P98 legacy instance"
 
 -- | Type synonyms
 type Vec0 = Vec
@@ -231,8 +241,3 @@ vec9 :: a -> a -> a -> a -> a -> a -> a -> a -> a -> Vec9 a
 vec9 x0 x1 x2 x3 x4 x5 x6 x7 x8 = Vec :~ x0 :~ x1 :~ x2 :~ x3 :~ x4 :~ x5 :~ x6 :~ x7 :~ x8
 vec10 :: a -> a -> a -> a -> a -> a -> a -> a -> a -> a -> Vec10 a
 vec10 x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 = Vec :~ x0 :~ x1 :~ x2 :~ x3 :~ x4 :~ x5 :~ x6 :~ x7 :~ x8 :~ x9
-
-
--- | convert Failure to runtime error
-unsafePerformFailure :: IO a -> a
-unsafePerformFailure = unsafePerformIO
