@@ -46,7 +46,7 @@ Maintainer:          muranushi@gmail.com
 -- Copyright:           
 
 Category:            Data
-Tested-With:         GHC==7.0.3, GHC==7.4.1
+Tested-With:         GHC==7.0.3, GHC==7.4.1, GHC==7.6.1
 Build-type:          Simple
 
 -- Extra files to be distributed with the package, such as examples or
