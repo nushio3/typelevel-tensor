@@ -82,6 +82,16 @@ instance (Read a, Vector ((:~) n)) => Read (n :~ a) where
     _ <- P.char ')'
     return ret
 
+instance QC.Arbitrary (Vec a) where
+  arbitrary = return Vec
+  shrink = const []
+
+instance (QC.Arbitrary a, QC.Arbitrary (n a), Traversable n) => QC.Arbitrary (n :~ a) where
+  arbitrary = (:~) <$> QC.arbitrary <*> QC.arbitrary
+  shrink = sequence . fmap QC.shrink
+
+
+
 -- | the last component contributes the most to the ordering
 instance (Ord (n a), Ord a) => Ord (n :~ a) where
   compare (xs :~ x) (ys :~ y) = compare (x, xs) (y, ys)
