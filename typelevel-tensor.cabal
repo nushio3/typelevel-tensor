@@ -16,7 +16,7 @@ Name:                typelevel-tensor
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.2.1
+Version:             0.2.2
 
 -- A short (one-line) description of the package.
 Synopsis:            Tensors whose ranks and dimensions type-inferred and type-checked.
@@ -46,7 +46,7 @@ Maintainer:          muranushi@gmail.com
 -- Copyright:           
 
 Category:            Data
-Tested-With:         GHC==7.0.3, GHC==7.4.1, GHC==7.6.1
+Tested-With:         GHC==8.0.1,GHC==7.0.3, GHC==7.4.1, GHC==7.6.1
 Build-type:          Simple
 
 -- Extra files to be distributed with the package, such as examples or
@@ -97,6 +97,9 @@ test-suite runtests
                    HUnit                                    ,
                    QuickCheck >= 2 
     main-is: runtests.hs
+    
+    other-modules: Test.Adaptor
+                   Test.Tensor
     
     ghc-options:     -Wall -O3  -fspec-constr-count=25
     Default-Language: Haskell2010
